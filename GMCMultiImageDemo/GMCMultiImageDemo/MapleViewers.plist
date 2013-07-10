@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+	<dict>
+		<key>URL</key>
+		<string>https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Maple_viewers.jpg/320px-Maple_viewers.jpg</string>
+		<key>size</key>
+		<string>{320,140}</string>
+	</dict>
+	<dict>
+		<key>URL</key>
+		<string>https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Maple_viewers.jpg/768px-Maple_viewers.jpg</string>
+		<key>size</key>
+		<string>{768,336}</string>
+	</dict>
+	<dict>
+		<key>URL</key>
+		<string>https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Maple_viewers.jpg/1024px-Maple_viewers.jpg</string>
+		<key>size</key>
+		<string>{1024,448}</string>
+	</dict>
+	<dict>
+		<key>URL</key>
+		<string>https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Maple_viewers.jpg/2048px-Maple_viewers.jpg</string>
+		<key>size</key>
+		<string>{2048,896}</string>
+	</dict>
+	<dict>
+		<key>URL</key>
+		<string>https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Maple_viewers.jpg/4096px-Maple_viewers.jpg</string>
+		<key>size</key>
+		<string>{4096,1791}</string>
+	</dict>
+</array>
+</plist>
