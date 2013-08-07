@@ -1,4 +1,4 @@
-// GMCZoomingMultiImageView.m
+// GMCMultiImageView.m
 //
 // Copyright (c) 2013 Hilton Campbell
 //
@@ -20,54 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#import "GMCZoomingMultiImageView.h"
+#import "GMCMultiImageView.h"
 
-#define fequal(a,b) (fabs((a) - (b)) < FLT_EPSILON)
+@interface GMCMultiImageView ()
 
-@interface GMCZoomingMultiImageView () <UIScrollViewDelegate>
-
-@property (nonatomic, strong) UITapGestureRecognizer *doubleTapGestureRecognizer;
-
-@property (nonatomic, strong) UIScrollView *scrollView;
-@property (nonatomic, strong) UIImageView *imageView;
 @property (nonatomic, strong) UIActivityIndicatorView *loadingIndicatorView;
-
-@property (nonatomic, assign) CGSize previousBoundsSize;
 
 @property (nonatomic, strong) GMCMultiImageRendition *currentRendition;
 @property (nonatomic, strong) NSMutableArray *multiImageRenditionFetches;
 
-@property (nonatomic, assign) CGFloat initialZoomScale;
-@property (nonatomic, assign) CGFloat otherZoomScale;
-
 @end
 
-@implementation GMCZoomingMultiImageView
+@implementation GMCMultiImageView
 
 - (id)initWithFrame:(CGRect)frame {
     if ((self = [super initWithFrame:frame])) {
-        self.scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
-        self.scrollView.scrollsToTop = NO;
-        self.scrollView.showsVerticalScrollIndicator = NO;
-        self.scrollView.showsHorizontalScrollIndicator = NO;
-        self.scrollView.delegate = self;
-        self.scrollView.maximumZoomScale = 2;
-        self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        [self addSubview:self.scrollView];
-        
-        self.imageView = [[UIImageView alloc] init];
-        [self.scrollView addSubview:self.imageView];
-        
         self.loadingIndicatorView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
         self.loadingIndicatorView.frame = self.bounds;
         self.loadingIndicatorView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         [self addSubview:self.loadingIndicatorView];
         
         self.multiImageRenditionFetches = [NSMutableArray array];
-        
-        self.doubleTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(doubleTap:)];
-        self.doubleTapGestureRecognizer.numberOfTapsRequired = 2;
-        [self addGestureRecognizer:self.doubleTapGestureRecognizer];
     }
     return self;
 }
@@ -75,91 +48,43 @@
 - (void)setMultiImage:(GMCMultiImage *)multiImage {
     _multiImage = multiImage;
     
-    // Reset state
     self.currentRendition = nil;
-    self.imageView.image = nil;
-    [self.loadingIndicatorView stopAnimating];
-    
-    // Cancel all pending fetches
-    for (GMCMultiImageRenditionFetch *fetch in self.multiImageRenditionFetches) {
-        [fetch cancel];
+    for (GMCMultiImageRenditionFetch *multiImageRenditionFetch in self.multiImageRenditionFetches) {
+        [multiImageRenditionFetch cancel];
     }
     [self.multiImageRenditionFetches removeAllObjects];
     
-    // Resize image view
-    CGSize fullImageSize = [self.multiImage largestRenditionSize];
-    self.imageView.frame = CGRectMake(0, 0, fullImageSize.width, fullImageSize.height);
+    [self.loadingIndicatorView stopAnimating];
+    self.image = nil;
     
-    // Resize scroll view and establish initial zoom and zoom limits
-    self.scrollView.contentSize = fullImageSize;
-    self.scrollView.minimumZoomScale = MIN(1, MIN(self.scrollView.bounds.size.width / fullImageSize.width, self.scrollView.bounds.size.height / fullImageSize.height));
-    self.scrollView.zoomScale = self.scrollView.minimumZoomScale;
-    
-    self.initialZoomScale = self.scrollView.minimumZoomScale;
-    self.otherZoomScale = 1;
-    
-    [self updateImage];
-    [self centerImage];
+    if (self.multiImage) {
+        [self updateImage];
+    }
 }
 
 - (void)layoutSubviews {
     [super layoutSubviews];
     
-    if (!CGSizeEqualToSize(self.previousBoundsSize, self.bounds.size)) {
-        self.previousBoundsSize = self.bounds.size;
-        
-        CGSize fullImageSize = [self.multiImage largestRenditionSize];
-        
-        CGFloat previousMinimumZoomScale = self.scrollView.minimumZoomScale;
-        self.scrollView.minimumZoomScale = MIN(1, MIN(self.scrollView.bounds.size.width / fullImageSize.width, self.scrollView.bounds.size.height / fullImageSize.height));
-        if (self.scrollView.zoomScale == previousMinimumZoomScale) {
-            self.scrollView.zoomScale = self.scrollView.minimumZoomScale;
-        }
-        self.scrollView.zoomScale = MAX(self.scrollView.minimumZoomScale, self.scrollView.zoomScale);
-        
-        self.initialZoomScale = self.scrollView.minimumZoomScale;
-        
+    if (self.multiImage) {
         [self updateImage];
-        [self centerImage];
     }
-}
-
-- (void)centerImage {
-    CGPoint center;
-	center.x = roundf(self.scrollView.contentSize.width / 2 + MAX(0, (self.scrollView.bounds.size.width - self.scrollView.contentSize.width) / 2));
-	center.y = roundf(self.scrollView.contentSize.height / 2 + MAX(0, (self.scrollView.bounds.size.height - self.scrollView.contentSize.height) / 2));
-    self.imageView.center = center;
-}
-
-- (void)zoomToScale:(CGFloat)scale atLocation:(CGPoint)location {
-	CGRect zoomRect;
-    zoomRect.size.width  = self.scrollView.bounds.size.width / scale;
-	zoomRect.size.height = self.scrollView.bounds.size.height / scale;
-    zoomRect.origin.x = location.x - (zoomRect.size.width / 2.0);
-    zoomRect.origin.y = location.y - (zoomRect.size.height / 2.0);
-	[self.scrollView zoomToRect:zoomRect animated:YES];
 }
 
 - (void)updateImage {
-    if (!self.multiImage) {
-        return;
-    }
+    CGSize desiredSize = self.bounds.size;
     
-    CGSize fullImageSize = [self.multiImage largestRenditionSize];
-    CGSize desiredSize = CGSizeMake(fullImageSize.width * self.scrollView.zoomScale, fullImageSize.height * self.scrollView.zoomScale);
-    
-    GMCMultiImageRendition *rendition = [self.multiImage bestRenditionThatFits:desiredSize contentMode:GMCMultiImageContentModeScaleAspectFit];
+    GMCMultiImageRendition *rendition = [self.multiImage bestRenditionThatFits:desiredSize contentMode:[self multiImageContentMode]];
     if (![self.currentRendition isEqual:rendition]) {
         self.currentRendition = rendition;
         
-        if (self.imageView.image == nil) {
+        if (self.image == nil) {
             GMCMultiImageRendition *smallestRendition = [self.multiImage bestRenditionThatFits:CGSizeMake(55, 55) contentMode:GMCMultiImageContentModeScaleAspectFit];
             if (smallestRendition.isImageAvailable) {
                 [self.loadingIndicatorView stopAnimating];
                 
                 // Show the smallest representation first, if available.
                 // It's OK to do this on the main thread because the image is very small.
-                self.imageView.image = smallestRendition.image;
+                self.image = smallestRendition.image;
             } else {
                 [self.loadingIndicatorView startAnimating];
                 
@@ -169,14 +94,14 @@
                     
                     if (!error) {
                         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
-                            if ([self.currentRendition isEqual:rendition] && self.imageView.image == nil) {
+                            if ([self.currentRendition isEqual:rendition] && self.image == nil) {
                                 UIImage *image = [[self class] decompressedImageFromImage:smallestRendition.image];
                                 
                                 dispatch_async(dispatch_get_main_queue(), ^{
-                                    if ([self.currentRendition isEqual:rendition] && self.imageView.image == nil) {
+                                    if ([self.currentRendition isEqual:rendition] && self.image == nil) {
                                         [self.loadingIndicatorView stopAnimating];
                                         
-                                        self.imageView.image = image;
+                                        self.image = image;
                                     }
                                 });
                             }
@@ -190,7 +115,7 @@
         }
         
         if (!rendition.isImageAvailable) {
-            GMCMultiImageRendition *bestAvailableRendition = [self.multiImage bestAvailableRenditionThatFits:desiredSize contentMode:GMCMultiImageContentModeScaleAspectFit];
+            GMCMultiImageRendition *bestAvailableRendition = [self.multiImage bestAvailableRenditionThatFits:desiredSize contentMode:[self multiImageContentMode]];
             if (bestAvailableRendition && ![bestAvailableRendition isEqual:rendition]) {
                 // Fetch and set the best available representation, as long as the desired one hasn't been set yet.
                 // Don't directly set the image, as that would cause the image to be loaded on the main thread.
@@ -206,7 +131,7 @@
                                     if ([self.currentRendition isEqual:rendition]) {
                                         [self.loadingIndicatorView stopAnimating];
                                         
-                                        self.imageView.image = image;
+                                        self.image = image;
                                     }
                                 });
                             }
@@ -237,7 +162,7 @@
                             if ([self.currentRendition isEqual:rendition]) {
                                 [self.loadingIndicatorView stopAnimating];
                                 
-                                self.imageView.image = image;
+                                self.image = image;
                             }
                         });
                     }
@@ -250,37 +175,24 @@
     }
 }
 
+- (GMCMultiImageContentMode)multiImageContentMode {
+    switch (self.contentMode) {
+        case UIViewContentModeScaleAspectFill:
+        case UIViewContentModeScaleToFill:
+            return GMCMultiImageContentModeScaleAspectFill;
+        case UIViewContentModeScaleAspectFit:
+            return GMCMultiImageContentModeScaleAspectFit;
+        default:
+            return GMCMultiImageContentModeScaleAspectFit;
+    }
+}
+
 + (UIImage *)decompressedImageFromImage:(UIImage *)image {
     UIGraphicsBeginImageContextWithOptions(image.size, YES, 0);
     [image drawAtPoint:CGPointZero];
     UIImage *decompressedImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return decompressedImage;
-}
-
-#pragma mark - Gesture Recognizers
-
-- (void)doubleTap:(UITapGestureRecognizer *)gestureRecognizer {
-    CGPoint location = [gestureRecognizer locationInView:self.imageView];
-    if (!fequal(self.scrollView.zoomScale, self.initialZoomScale)) {
-        [self zoomToScale:self.initialZoomScale atLocation:location];
-    } else if (!fequal(self.initialZoomScale, self.otherZoomScale)) {
-        [self zoomToScale:self.otherZoomScale atLocation:location];
-    }
-}
-
-#pragma mark - UIScrollViewDelegate
-
-- (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView {
-    return self.imageView;
-}
-
-- (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(UIView *)view atScale:(float)scale {
-    [self updateImage];
-}
-
-- (void)scrollViewDidZoom:(UIScrollView *)scrollView {
-    [self centerImage];
 }
 
 @end
