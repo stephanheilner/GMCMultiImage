@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 #import "GMCZoomingMultiImageView.h"
+#import "GMCDecompressImageOperation.h"
 
 #define fequal(a,b) (fabs((a) - (b)) < FLT_EPSILON)
 
@@ -36,6 +37,7 @@
 
 @property (nonatomic, strong) GMCMultiImageRendition *currentRendition;
 @property (nonatomic, strong) NSMutableArray *multiImageRenditionFetches;
+@property (nonatomic, strong) NSMutableArray *decompressImageOperations;
 
 @property (nonatomic, assign) CGFloat initialZoomScale;
 @property (nonatomic, assign) CGFloat otherZoomScale;
@@ -64,6 +66,7 @@
         [self addSubview:self.loadingIndicatorView];
         
         self.multiImageRenditionFetches = [NSMutableArray array];
+        self.decompressImageOperations = [NSMutableArray array];
         
         self.doubleTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(doubleTap:)];
         self.doubleTapGestureRecognizer.numberOfTapsRequired = 2;
@@ -80,10 +83,14 @@
     self.imageView.image = nil;
     [self.loadingIndicatorView stopAnimating];
     
-    // Cancel all pending fetches
-    for (GMCMultiImageRenditionFetch *fetch in self.multiImageRenditionFetches) {
-        [fetch cancel];
+    // Cancel all pending fetches and decompress image operations
+    for (GMCDecompressImageOperation *decompressImageOperation in self.decompressImageOperations) {
+        [decompressImageOperation cancel];
     }
+    for (GMCMultiImageRenditionFetch *multiImageRenditionFetch in self.multiImageRenditionFetches) {
+        [multiImageRenditionFetch cancel];
+    }
+    [self.decompressImageOperations removeAllObjects];
     [self.multiImageRenditionFetches removeAllObjects];
     
     // Resize image view
@@ -170,15 +177,25 @@
                     if (!error) {
                         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
                             if ([self.currentRendition isEqual:rendition] && self.imageView.image == nil) {
-                                UIImage *image = [[self class] decompressedImageFromImage:smallestRendition.image];
+                                GMCDecompressImageOperation *operation = [[GMCDecompressImageOperation alloc] init];
+                                operation.image = smallestRendition.image;
                                 
-                                dispatch_async(dispatch_get_main_queue(), ^{
-                                    if ([self.currentRendition isEqual:rendition] && self.imageView.image == nil) {
-                                        [self.loadingIndicatorView stopAnimating];
-                                        
-                                        self.imageView.image = image;
-                                    }
-                                });
+                                __weak GMCDecompressImageOperation *weakOperation = operation;
+                                operation.completionBlock = ^{
+                                    UIImage *image = weakOperation.image;
+                                    [self.decompressImageOperations removeObject:weakOperation];
+                                    
+                                    dispatch_async(dispatch_get_main_queue(), ^{
+                                        if ([self.currentRendition isEqual:rendition] && self.imageView.image == nil) {
+                                            [self.loadingIndicatorView stopAnimating];
+                                            
+                                            self.imageView.image = image;
+                                        }
+                                    });
+                                };
+                                
+                                [self.decompressImageOperations addObject:operation];
+                                [[NSOperationQueue decompressImageQueue] addOperation:operation];
                             }
                         });
                     }
@@ -200,15 +217,25 @@
                     if (!error) {
                         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
                             if ([self.currentRendition isEqual:rendition]) {
-                                UIImage *image = [[self class] decompressedImageFromImage:bestAvailableRendition.image];
+                                GMCDecompressImageOperation *operation = [[GMCDecompressImageOperation alloc] init];
+                                operation.image = bestAvailableRendition.image;
                                 
-                                dispatch_async(dispatch_get_main_queue(), ^{
-                                    if ([self.currentRendition isEqual:rendition]) {
-                                        [self.loadingIndicatorView stopAnimating];
-                                        
-                                        self.imageView.image = image;
-                                    }
-                                });
+                                __weak GMCDecompressImageOperation *weakOperation = operation;
+                                operation.completionBlock = ^{
+                                    UIImage *image = weakOperation.image;
+                                    [self.decompressImageOperations removeObject:weakOperation];
+                                    
+                                    dispatch_async(dispatch_get_main_queue(), ^{
+                                        if ([self.currentRendition isEqual:rendition]) {
+                                            [self.loadingIndicatorView stopAnimating];
+                                            
+                                            self.imageView.image = image;
+                                        }
+                                    });
+                                };
+                                
+                                [self.decompressImageOperations addObject:operation];
+                                [[NSOperationQueue decompressImageQueue] addOperation:operation];
                             }
                         });
                     }
@@ -231,15 +258,25 @@
             } else {
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
                     if ([self.currentRendition isEqual:rendition]) {
-                        UIImage *image = [[self class] decompressedImageFromImage:rendition.image];
+                        GMCDecompressImageOperation *operation = [[GMCDecompressImageOperation alloc] init];
+                        operation.image = rendition.image;
                         
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            if ([self.currentRendition isEqual:rendition]) {
-                                [self.loadingIndicatorView stopAnimating];
-                                
-                                self.imageView.image = image;
-                            }
-                        });
+                        __weak GMCDecompressImageOperation *weakOperation = operation;
+                        operation.completionBlock = ^{
+                            UIImage *image = weakOperation.image;
+                            [self.decompressImageOperations removeObject:weakOperation];
+                            
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                if ([self.currentRendition isEqual:rendition]) {
+                                    [self.loadingIndicatorView stopAnimating];
+                                    
+                                    self.imageView.image = image;
+                                }
+                            });
+                        };
+                        
+                        [self.decompressImageOperations addObject:operation];
+                        [[NSOperationQueue decompressImageQueue] addOperation:operation];
                     }
                 });
             }
@@ -248,14 +285,6 @@
             [self.multiImageRenditionFetches addObject:fetch];
         }
     }
-}
-
-+ (UIImage *)decompressedImageFromImage:(UIImage *)image {
-    UIGraphicsBeginImageContextWithOptions(image.size, YES, 0);
-    [image drawAtPoint:CGPointZero];
-    UIImage *decompressedImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return decompressedImage;
 }
 
 #pragma mark - Gesture Recognizers

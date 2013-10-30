@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 #import "GMCMultiImageView.h"
+#import "GMCDecompressImageOperation.h"
 
 @interface GMCMultiImageView ()
 
@@ -28,6 +29,7 @@
 
 @property (nonatomic, strong) GMCMultiImageRendition *currentRendition;
 @property (nonatomic, strong) NSMutableArray *multiImageRenditionFetches;
+@property (nonatomic, strong) NSMutableArray *decompressImageOperations;
 
 @end
 
@@ -41,6 +43,7 @@
         [self addSubview:self.loadingIndicatorView];
         
         self.multiImageRenditionFetches = [NSMutableArray array];
+        self.decompressImageOperations = [NSMutableArray array];
     }
     return self;
 }
@@ -49,9 +52,13 @@
     _multiImage = multiImage;
     
     self.currentRendition = nil;
+    for (GMCDecompressImageOperation *decompressImageOperation in self.decompressImageOperations) {
+        [decompressImageOperation cancel];
+    }
     for (GMCMultiImageRenditionFetch *multiImageRenditionFetch in self.multiImageRenditionFetches) {
         [multiImageRenditionFetch cancel];
     }
+    [self.decompressImageOperations removeAllObjects];
     [self.multiImageRenditionFetches removeAllObjects];
     
     [self.loadingIndicatorView stopAnimating];
@@ -95,15 +102,25 @@
                     if (!error) {
                         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
                             if ([self.currentRendition isEqual:rendition] && self.image == nil) {
-                                UIImage *image = [[self class] decompressedImageFromImage:smallestRendition.image];
+                                GMCDecompressImageOperation *operation = [[GMCDecompressImageOperation alloc] init];
+                                operation.image = smallestRendition.image;
                                 
-                                dispatch_async(dispatch_get_main_queue(), ^{
-                                    if ([self.currentRendition isEqual:rendition] && self.image == nil) {
-                                        [self.loadingIndicatorView stopAnimating];
-                                        
-                                        self.image = image;
-                                    }
-                                });
+                                __weak GMCDecompressImageOperation *weakOperation = operation;
+                                operation.completionBlock = ^{
+                                    UIImage *image = weakOperation.image;
+                                    [self.decompressImageOperations removeObject:weakOperation];
+                                    
+                                    dispatch_async(dispatch_get_main_queue(), ^{
+                                        if ([self.currentRendition isEqual:rendition] && self.image == nil) {
+                                            [self.loadingIndicatorView stopAnimating];
+                                            
+                                            self.image = image;
+                                        }
+                                    });
+                                };
+                                
+                                [self.decompressImageOperations addObject:operation];
+                                [[NSOperationQueue decompressImageQueue] addOperation:operation];
                             }
                         });
                     }
@@ -125,15 +142,25 @@
                     if (!error) {
                         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
                             if ([self.currentRendition isEqual:rendition]) {
-                                UIImage *image = [[self class] decompressedImageFromImage:bestAvailableRendition.image];
+                                GMCDecompressImageOperation *operation = [[GMCDecompressImageOperation alloc] init];
+                                operation.image = bestAvailableRendition.image;
                                 
-                                dispatch_async(dispatch_get_main_queue(), ^{
-                                    if ([self.currentRendition isEqual:rendition]) {
-                                        [self.loadingIndicatorView stopAnimating];
-                                        
-                                        self.image = image;
-                                    }
-                                });
+                                __weak GMCDecompressImageOperation *weakOperation = operation;
+                                operation.completionBlock = ^{
+                                    UIImage *image = weakOperation.image;
+                                    [self.decompressImageOperations removeObject:weakOperation];
+                                    
+                                    dispatch_async(dispatch_get_main_queue(), ^{
+                                        if ([self.currentRendition isEqual:rendition]) {
+                                            [self.loadingIndicatorView stopAnimating];
+                                            
+                                            self.image = image;
+                                        }
+                                    });
+                                };
+                                
+                                [self.decompressImageOperations addObject:operation];
+                                [[NSOperationQueue decompressImageQueue] addOperation:operation];
                             }
                         });
                     }
@@ -156,15 +183,25 @@
             } else {
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
                     if ([self.currentRendition isEqual:rendition]) {
-                        UIImage *image = [[self class] decompressedImageFromImage:rendition.image];
+                        GMCDecompressImageOperation *operation = [[GMCDecompressImageOperation alloc] init];
+                        operation.image = rendition.image;
                         
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            if ([self.currentRendition isEqual:rendition]) {
-                                [self.loadingIndicatorView stopAnimating];
-                                
-                                self.image = image;
-                            }
-                        });
+                        __weak GMCDecompressImageOperation *weakOperation = operation;
+                        operation.completionBlock = ^{
+                            UIImage *image = weakOperation.image;
+                            [self.decompressImageOperations removeObject:weakOperation];
+                            
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                if ([self.currentRendition isEqual:rendition]) {
+                                    [self.loadingIndicatorView stopAnimating];
+                                    
+                                    self.image = image;
+                                }
+                            });
+                        };
+                        
+                        [self.decompressImageOperations addObject:operation];
+                        [[NSOperationQueue decompressImageQueue] addOperation:operation];
                     }
                 });
             }
@@ -181,37 +218,9 @@
         case UIViewContentModeScaleToFill:
             return GMCMultiImageContentModeScaleAspectFill;
         case UIViewContentModeScaleAspectFit:
-            return GMCMultiImageContentModeScaleAspectFit;
         default:
             return GMCMultiImageContentModeScaleAspectFit;
     }
-}
-
-// From http://ioscodesnippet.com/2011/10/02/force-decompressing-uiimage-in-background-to-achieve/
-+ (UIImage *)decompressedImageFromImage:(UIImage *)image {
-    CGImageRef imageRef = image.CGImage;
-    
-    // Create a bitmap context that will not require conversion on display
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef context = CGBitmapContextCreate(NULL,
-                                                 CGImageGetWidth(imageRef),
-                                                 CGImageGetHeight(imageRef),
-                                                 8,
-                                                 CGImageGetWidth(imageRef) * 4,
-                                                 colorSpace,
-                                                 kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
-    CGColorSpaceRelease(colorSpace);
-    if (!context) {
-        return nil;
-    }
-    
-    // Draw the image
-    CGContextDrawImage(context, CGRectMake(0, 0, CGImageGetWidth(imageRef), CGImageGetHeight(imageRef)), imageRef);
-    CGImageRef decompressedImageRef = CGBitmapContextCreateImage(context);
-    CGContextRelease(context);
-    UIImage *decompressedImage = [[UIImage alloc] initWithCGImage:decompressedImageRef];
-    CGImageRelease(decompressedImageRef);
-    return decompressedImage;
 }
 
 @end

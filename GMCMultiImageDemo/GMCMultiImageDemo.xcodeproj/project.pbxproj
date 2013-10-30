@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D9C8492D1821747900208F3C /* GMCDecompressImageOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = D9C8492C1821747900208F3C /* GMCDecompressImageOperation.m */; };
 		D9D23131178CDE4B00933F3B /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D9D23130178CDE4B00933F3B /* UIKit.framework */; };
 		D9D23133178CDE4B00933F3B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D9D23132178CDE4B00933F3B /* Foundation.framework */; };
 		D9D23135178CDE4B00933F3B /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D9D23134178CDE4B00933F3B /* CoreGraphics.framework */; };
@@ -27,6 +28,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D9C8492B1821747900208F3C /* GMCDecompressImageOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GMCDecompressImageOperation.h; sourceTree = "<group>"; };
+		D9C8492C1821747900208F3C /* GMCDecompressImageOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GMCDecompressImageOperation.m; sourceTree = "<group>"; };
 		D9D2312D178CDE4B00933F3B /* GMCMultiImageDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GMCMultiImageDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D9D23130178CDE4B00933F3B /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		D9D23132178CDE4B00933F3B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -141,6 +144,8 @@
 				D9D23153178CDE5600933F3B /* GMCMultiImageRenditionFetch.m */,
 				D9D23154178CDE5600933F3B /* GMCZoomingMultiImageView.h */,
 				D9D23155178CDE5600933F3B /* GMCZoomingMultiImageView.m */,
+				D9C8492B1821747900208F3C /* GMCDecompressImageOperation.h */,
+				D9C8492C1821747900208F3C /* GMCDecompressImageOperation.m */,
 			);
 			name = GMCMultiImage;
 			path = ../../GMCMultiImage;
@@ -223,6 +228,7 @@
 			files = (
 				D9D2313D178CDE4B00933F3B /* main.m in Sources */,
 				D9D23141178CDE4B00933F3B /* AppDelegate.m in Sources */,
+				D9C8492D1821747900208F3C /* GMCDecompressImageOperation.m in Sources */,
 				D9D23156178CDE5600933F3B /* GMCMultiImage.m in Sources */,
 				D9D23157178CDE5600933F3B /* GMCMultiImageRendition.m in Sources */,
 				D9D23158178CDE5600933F3B /* GMCMultiImageRenditionFetch.m in Sources */,
@@ -346,6 +352,7 @@
 				D9D2314C178CDE4B00933F3B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
