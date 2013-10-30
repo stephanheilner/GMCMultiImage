@@ -187,11 +187,30 @@
     }
 }
 
+// From http://ioscodesnippet.com/2011/10/02/force-decompressing-uiimage-in-background-to-achieve/
 + (UIImage *)decompressedImageFromImage:(UIImage *)image {
-    UIGraphicsBeginImageContextWithOptions(image.size, YES, 0);
-    [image drawAtPoint:CGPointZero];
-    UIImage *decompressedImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
+    CGImageRef imageRef = image.CGImage;
+    
+    // Create a bitmap context that will not require conversion on display
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef context = CGBitmapContextCreate(NULL,
+                                                 CGImageGetWidth(imageRef),
+                                                 CGImageGetHeight(imageRef),
+                                                 8,
+                                                 CGImageGetWidth(imageRef) * 4,
+                                                 colorSpace,
+                                                 kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
+    CGColorSpaceRelease(colorSpace);
+    if (!context) {
+        return nil;
+    }
+    
+    // Draw the image
+    CGContextDrawImage(context, CGRectMake(0, 0, CGImageGetWidth(imageRef), CGImageGetHeight(imageRef)), imageRef);
+    CGImageRef decompressedImageRef = CGBitmapContextCreateImage(context);
+    CGContextRelease(context);
+    UIImage *decompressedImage = [[UIImage alloc] initWithCGImage:decompressedImageRef];
+    CGImageRelease(decompressedImageRef);
     return decompressedImage;
 }
 
