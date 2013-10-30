@@ -53,7 +53,7 @@
         self.scrollView.showsVerticalScrollIndicator = NO;
         self.scrollView.showsHorizontalScrollIndicator = NO;
         self.scrollView.delegate = self;
-        self.scrollView.maximumZoomScale = 2;
+        self.scrollView.maximumZoomScale = 1;
         self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         [self addSubview:self.scrollView];
         
