@@ -85,7 +85,7 @@
         self.currentRendition = rendition;
         
         if (self.image == nil) {
-            GMCMultiImageRendition *smallestRendition = [self.multiImage bestRenditionThatFits:CGSizeMake(55, 55) contentMode:GMCMultiImageContentModeScaleAspectFit];
+            GMCMultiImageRendition *smallestRendition = [self.multiImage bestRenditionThatFits:CGSizeMake(55, 55) contentMode:[self multiImageContentMode]];
             if (smallestRendition.isImageAvailable) {
                 [self.loadingIndicatorView stopAnimating];
                 
