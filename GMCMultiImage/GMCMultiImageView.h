@@ -26,4 +26,9 @@
 
 @property (nonatomic, strong) GMCMultiImage *multiImage;
 
+/**
+ * Size used to select a rendition to show immediately (if available) while waiting for the best rendition to load and decompress in the background.
+ */
+@property (nonatomic, assign) CGSize placeholderSize;
+
 @end

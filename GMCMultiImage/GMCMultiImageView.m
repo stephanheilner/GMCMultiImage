@@ -44,6 +44,8 @@
         
         self.multiImageRenditionFetches = [NSMutableArray array];
         self.decompressImageOperations = [NSMutableArray array];
+        
+        _placeholderSize = CGSizeMake(55, 55);
     }
     return self;
 }
@@ -85,7 +87,7 @@
         self.currentRendition = rendition;
         
         if (self.image == nil) {
-            GMCMultiImageRendition *smallestRendition = [self.multiImage bestRenditionThatFits:CGSizeMake(55, 55) contentMode:[self multiImageContentMode]];
+            GMCMultiImageRendition *smallestRendition = [self.multiImage bestRenditionThatFits:self.placeholderSize contentMode:[self multiImageContentMode]];
             if (smallestRendition.isImageAvailable) {
                 [self.loadingIndicatorView stopAnimating];
                 
