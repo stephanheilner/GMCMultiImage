@@ -64,17 +64,17 @@
     return largestRendition;
 }
 
-- (GMCMultiImageRendition *)bestRenditionThatFits:(CGSize)size contentMode:(GMCMultiImageContentMode)contentMode {
-    return [self bestRenditionThatFits:size contentMode:contentMode mustBeAvailable:NO];
+- (GMCMultiImageRendition *)bestRenditionThatFits:(CGSize)size scale:(CGFloat)scale contentMode:(GMCMultiImageContentMode)contentMode {
+    return [self bestRenditionThatFits:size scale:scale contentMode:contentMode mustBeAvailable:NO];
 }
 
-- (GMCMultiImageRendition *)bestAvailableRenditionThatFits:(CGSize)size contentMode:(GMCMultiImageContentMode)contentMode {
-    return [self bestRenditionThatFits:size contentMode:contentMode mustBeAvailable:YES];
+- (GMCMultiImageRendition *)bestAvailableRenditionThatFits:(CGSize)size scale:(CGFloat)scale contentMode:(GMCMultiImageContentMode)contentMode {
+    return [self bestRenditionThatFits:size scale:scale contentMode:contentMode mustBeAvailable:YES];
 }
 
-- (GMCMultiImageRendition *)bestRenditionThatFits:(CGSize)size contentMode:(GMCMultiImageContentMode)contentMode mustBeAvailable:(BOOL)mustBeAvailable {
-    // Adjust the size to account for retina displays
-    CGSize adjustedSize = CGSizeMake(size.width * [UIScreen mainScreen].scale, size.height * [UIScreen mainScreen].scale);
+- (GMCMultiImageRendition *)bestRenditionThatFits:(CGSize)size scale:(CGFloat)scale contentMode:(GMCMultiImageContentMode)contentMode mustBeAvailable:(BOOL)mustBeAvailable {
+    // Incorporate the scale in the size
+    CGSize adjustedSize = CGSizeMake(size.width * scale, size.height * scale);
     
     switch (contentMode) {
         case GMCMultiImageContentModeScaleAspectFill: {
@@ -124,9 +124,9 @@
     }
 }
 
-- (GMCMultiImageRendition *)bestRenditionForSquareThumbnailThatFits:(CGSize)size {
+- (GMCMultiImageRendition *)bestRenditionForSquareThumbnailThatFits:(CGSize)size scale:(CGFloat)scale {
     // Adjust the size to account for retina displays
-    CGSize adjustedSize = CGSizeMake(size.width * [UIScreen mainScreen].scale, size.height * [UIScreen mainScreen].scale);
+    CGSize adjustedSize = CGSizeMake(size.width * scale, size.height * scale);
     
     GMCMultiImageRendition *bestRendition = nil;
     GMCMultiImageRendition *largestRendition = nil;

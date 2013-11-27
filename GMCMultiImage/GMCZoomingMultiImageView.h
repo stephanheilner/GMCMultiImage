@@ -22,9 +22,21 @@
 
 #import "GMCMultiImage.h"
 
+extern const CGSize GMCZoomingMultiImageViewPlaceholderSizeDefault;
+
 @interface GMCZoomingMultiImageView : UIView
 
 @property (nonatomic, strong) GMCMultiImage *multiImage;
 @property (nonatomic, strong, readonly) UITapGestureRecognizer *doubleTapGestureRecognizer;
+
+/**
+ * Size used to select a rendition to show immediately (if available) while waiting for the best rendition to load and decompress in the background.
+ */
+@property (nonatomic, assign) CGSize placeholderSize;
+
+/**
+ * Scale used to select renditions. Defaults to the screen scale.
+ */
+@property (nonatomic, assign) CGFloat scale;
 
 @end

@@ -52,16 +52,16 @@ typedef enum {
  */
 - (GMCMultiImageRendition *)largestRendition;
 
-/** Returns the rendition that best fits or fills the given size.
+/** Returns the rendition that best fits or fills the given size and scale.
  */
-- (GMCMultiImageRendition *)bestRenditionThatFits:(CGSize)size contentMode:(GMCMultiImageContentMode)contentMode;
+- (GMCMultiImageRendition *)bestRenditionThatFits:(CGSize)size scale:(CGFloat)scale contentMode:(GMCMultiImageContentMode)contentMode;
 
-/** Returns the rendition that best fits or fills the given size and is available.
+/** Returns the rendition that best fits or fills the given size and scale and is available.
  */
-- (GMCMultiImageRendition *)bestAvailableRenditionThatFits:(CGSize)size contentMode:(GMCMultiImageContentMode)contentMode;
+- (GMCMultiImageRendition *)bestAvailableRenditionThatFits:(CGSize)size scale:(CGFloat)scale contentMode:(GMCMultiImageContentMode)contentMode;
 
-/** Returns the rendition whose square thumbnail best fits the given size.
+/** Returns the rendition whose square thumbnail best fits the given size and scale.
  */
-- (GMCMultiImageRendition *)bestRenditionForSquareThumbnailThatFits:(CGSize)size;
+- (GMCMultiImageRendition *)bestRenditionForSquareThumbnailThatFits:(CGSize)size scale:(CGFloat)scale;
 
 @end

@@ -23,6 +23,8 @@
 #import "GMCMultiImageView.h"
 #import "GMCDecompressImageOperation.h"
 
+const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
+
 @interface GMCMultiImageView ()
 
 @property (nonatomic, strong) UIActivityIndicatorView *loadingIndicatorView;
@@ -45,7 +47,8 @@
         self.multiImageRenditionFetches = [NSMutableArray array];
         self.decompressImageOperations = [NSMutableArray array];
         
-        _placeholderSize = CGSizeMake(55, 55);
+        _placeholderSize = GMCMultiImageViewPlaceholderSizeDefault;
+        _scale = [UIScreen mainScreen].scale;
     }
     return self;
 }
@@ -82,12 +85,12 @@
 - (void)updateImage {
     CGSize desiredSize = self.bounds.size;
     
-    GMCMultiImageRendition *rendition = [self.multiImage bestRenditionThatFits:desiredSize contentMode:[self multiImageContentMode]];
+    GMCMultiImageRendition *rendition = [self.multiImage bestRenditionThatFits:desiredSize scale:self.scale contentMode:[self multiImageContentMode]];
     if (![self.currentRendition isEqual:rendition]) {
         self.currentRendition = rendition;
         
         if (self.image == nil) {
-            GMCMultiImageRendition *smallestRendition = [self.multiImage bestRenditionThatFits:self.placeholderSize contentMode:[self multiImageContentMode]];
+            GMCMultiImageRendition *smallestRendition = [self.multiImage bestRenditionThatFits:self.placeholderSize scale:self.scale contentMode:[self multiImageContentMode]];
             if (smallestRendition.isImageAvailable) {
                 [self.loadingIndicatorView stopAnimating];
                 
@@ -134,7 +137,7 @@
         }
         
         if (!rendition.isImageAvailable) {
-            GMCMultiImageRendition *bestAvailableRendition = [self.multiImage bestAvailableRenditionThatFits:desiredSize contentMode:[self multiImageContentMode]];
+            GMCMultiImageRendition *bestAvailableRendition = [self.multiImage bestAvailableRenditionThatFits:desiredSize scale:self.scale contentMode:[self multiImageContentMode]];
             if (bestAvailableRendition && ![bestAvailableRendition isEqual:rendition]) {
                 // Fetch and set the best available representation, as long as the desired one hasn't been set yet.
                 // Don't directly set the image, as that would cause the image to be loaded on the main thread.

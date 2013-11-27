@@ -23,6 +23,8 @@
 #import "GMCZoomingMultiImageView.h"
 #import "GMCDecompressImageOperation.h"
 
+const CGSize GMCZoomingMultiImageViewPlaceholderSizeDefault = { 55, 55 };
+
 #define fequal(a,b) (fabs((a) - (b)) < FLT_EPSILON)
 
 @interface GMCZoomingMultiImageView () <UIScrollViewDelegate>
@@ -71,6 +73,9 @@
         self.doubleTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(doubleTap:)];
         self.doubleTapGestureRecognizer.numberOfTapsRequired = 2;
         [self addGestureRecognizer:self.doubleTapGestureRecognizer];
+        
+        _placeholderSize = GMCZoomingMultiImageViewPlaceholderSizeDefault;
+        _scale = [UIScreen mainScreen].scale;
     }
     return self;
 }
@@ -155,12 +160,12 @@
     CGSize fullImageSize = [self.multiImage largestRenditionSize];
     CGSize desiredSize = CGSizeMake(fullImageSize.width * self.scrollView.zoomScale, fullImageSize.height * self.scrollView.zoomScale);
     
-    GMCMultiImageRendition *rendition = [self.multiImage bestRenditionThatFits:desiredSize contentMode:GMCMultiImageContentModeScaleAspectFit];
+    GMCMultiImageRendition *rendition = [self.multiImage bestRenditionThatFits:desiredSize scale:self.scale contentMode:GMCMultiImageContentModeScaleAspectFit];
     if (![self.currentRendition isEqual:rendition]) {
         self.currentRendition = rendition;
         
         if (self.imageView.image == nil) {
-            GMCMultiImageRendition *smallestRendition = [self.multiImage bestRenditionThatFits:CGSizeMake(55, 55) contentMode:GMCMultiImageContentModeScaleAspectFit];
+            GMCMultiImageRendition *smallestRendition = [self.multiImage bestRenditionThatFits:self.placeholderSize scale:self.scale contentMode:GMCMultiImageContentModeScaleAspectFit];
             if (smallestRendition.isImageAvailable) {
                 [self.loadingIndicatorView stopAnimating];
                 
@@ -207,7 +212,7 @@
         }
         
         if (!rendition.isImageAvailable) {
-            GMCMultiImageRendition *bestAvailableRendition = [self.multiImage bestAvailableRenditionThatFits:desiredSize contentMode:GMCMultiImageContentModeScaleAspectFit];
+            GMCMultiImageRendition *bestAvailableRendition = [self.multiImage bestAvailableRenditionThatFits:desiredSize scale:self.scale contentMode:GMCMultiImageContentModeScaleAspectFit];
             if (bestAvailableRendition && ![bestAvailableRendition isEqual:rendition]) {
                 // Fetch and set the best available representation, as long as the desired one hasn't been set yet.
                 // Don't directly set the image, as that would cause the image to be loaded on the main thread.
