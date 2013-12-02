@@ -74,6 +74,12 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
     }
 }
 
+- (void)setLoadingIndicatorViewHidden:(BOOL)loadingIndicatorViewHidden {
+    _loadingIndicatorViewHidden = loadingIndicatorViewHidden;
+    
+    [self.loadingIndicatorView stopAnimating];
+}
+
 - (void)layoutSubviews {
     [super layoutSubviews];
     
@@ -98,7 +104,9 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                 // It's OK to do this on the main thread because the image is very small.
                 self.image = smallestRendition.image;
             } else {
-                [self.loadingIndicatorView startAnimating];
+                if (!self.loadingIndicatorViewHidden) {
+                    [self.loadingIndicatorView startAnimating];
+                }
                 
                 // If the smallest representation is not available, go ahead and fetch it, then show it
                 __block GMCMultiImageRenditionFetch *fetch = [smallestRendition fetchImageWithCompletionBlock:^(NSError *error) {

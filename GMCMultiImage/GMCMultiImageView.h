@@ -38,4 +38,9 @@ extern const CGSize GMCMultiImageViewPlaceholderSizeDefault;
  */
 @property (nonatomic, assign) CGFloat scale;
 
+/**
+ * Whether the loading indicator is hidden.
+ */
+@property (nonatomic, assign) BOOL loadingIndicatorViewHidden;
+
 @end
