@@ -102,7 +102,7 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                 
                 // If the smallest representation is not available, go ahead and fetch it, then show it
                 __block GMCMultiImageRenditionFetch *fetch = [smallestRendition fetchImageWithCompletionBlock:^(NSError *error) {
-                    if ([self.multiImageRenditionFetches containsObject:fetch]) {
+                    if ([self.currentRendition isEqual:rendition] && [self.multiImageRenditionFetches containsObject:fetch]) {
                         [self.multiImageRenditionFetches removeObject:fetch];
                     }
                     
@@ -115,7 +115,7 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                                 __weak GMCDecompressImageOperation *weakOperation = operation;
                                 operation.completionBlock = ^{
                                     UIImage *image = weakOperation.image;
-                                    if ([self.decompressImageOperations containsObject:weakOperation]) {
+                                    if ([self.currentRendition isEqual:rendition] && [self.decompressImageOperations containsObject:weakOperation]) {
                                         [self.decompressImageOperations removeObject:weakOperation];
                                     }
                                     
@@ -146,7 +146,7 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                 // Fetch and set the best available representation, as long as the desired one hasn't been set yet.
                 // Don't directly set the image, as that would cause the image to be loaded on the main thread.
                 __block GMCMultiImageRenditionFetch *fetch = [bestAvailableRendition fetchImageWithCompletionBlock:^(NSError *error) {
-                    if ([self.multiImageRenditionFetches containsObject:fetch]) {
+                    if ([self.currentRendition isEqual:rendition] && [self.multiImageRenditionFetches containsObject:fetch]) {
                         [self.multiImageRenditionFetches removeObject:fetch];
                     }
                     
@@ -159,7 +159,7 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                                 __weak GMCDecompressImageOperation *weakOperation = operation;
                                 operation.completionBlock = ^{
                                     UIImage *image = weakOperation.image;
-                                    if ([self.decompressImageOperations containsObject:weakOperation]) {
+                                    if ([self.currentRendition isEqual:rendition] && [self.decompressImageOperations containsObject:weakOperation]) {
                                         [self.decompressImageOperations removeObject:weakOperation];
                                     }
                                     
@@ -187,7 +187,7 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
         // Fetch and set the desired image representation.
         // Don't directly set the image, as that would cause the image to be loaded on the main thread.
         __block GMCMultiImageRenditionFetch *fetch = [rendition fetchImageWithCompletionBlock:^(NSError *error) {
-            if ([self.multiImageRenditionFetches containsObject:fetch]) {
+            if ([self.currentRendition isEqual:rendition] && [self.multiImageRenditionFetches containsObject:fetch]) {
                 [self.multiImageRenditionFetches removeObject:fetch];
             }
             
@@ -204,7 +204,7 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                         __weak GMCDecompressImageOperation *weakOperation = operation;
                         operation.completionBlock = ^{
                             UIImage *image = weakOperation.image;
-                            if ([self.decompressImageOperations containsObject:weakOperation]) {
+                            if ([self.currentRendition isEqual:rendition] && [self.decompressImageOperations containsObject:weakOperation]) {
                                 [self.decompressImageOperations removeObject:weakOperation];
                             }
                             
