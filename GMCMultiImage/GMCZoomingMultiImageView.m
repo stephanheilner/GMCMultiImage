@@ -50,6 +50,8 @@ const CGSize GMCZoomingMultiImageViewPlaceholderSizeDefault = { 55, 55 };
 
 - (id)initWithFrame:(CGRect)frame {
     if ((self = [super initWithFrame:frame])) {
+        [super setContentMode:UIViewContentModeScaleAspectFit];
+        
         self.scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
         self.scrollView.scrollsToTop = NO;
         self.scrollView.showsVerticalScrollIndicator = NO;
@@ -102,14 +104,7 @@ const CGSize GMCZoomingMultiImageViewPlaceholderSizeDefault = { 55, 55 };
     CGSize fullImageSize = [self.multiImage largestRenditionSize];
     self.imageView.frame = CGRectMake(0, 0, fullImageSize.width, fullImageSize.height);
     
-    // Resize scroll view and establish initial zoom and zoom limits
-    self.scrollView.contentSize = fullImageSize;
-    self.scrollView.minimumZoomScale = MIN(1, MIN(self.scrollView.bounds.size.width / fullImageSize.width, self.scrollView.bounds.size.height / fullImageSize.height));
-    self.scrollView.zoomScale = self.scrollView.minimumZoomScale;
-    
-    self.initialZoomScale = self.scrollView.minimumZoomScale;
-    self.otherZoomScale = 1;
-    
+    [self updateZoomInitial:YES];
     [self updateImage];
     [self centerImage];
 }
@@ -120,20 +115,45 @@ const CGSize GMCZoomingMultiImageViewPlaceholderSizeDefault = { 55, 55 };
     if (!CGSizeEqualToSize(self.previousBoundsSize, self.bounds.size)) {
         self.previousBoundsSize = self.bounds.size;
         
-        CGSize fullImageSize = [self.multiImage largestRenditionSize];
+        [self updateZoomInitial:NO];
+        [self updateImage];
+        [self centerImage];
+    }
+}
+
+- (void)updateZoomInitial:(BOOL)initial {
+    CGSize fullImageSize = [self.multiImage largestRenditionSize];
+    
+    self.scrollView.contentSize = fullImageSize;
+    
+    CGFloat previousMinimumZoomScale = self.scrollView.minimumZoomScale;
+    switch (self.contentMode) {
+        case UIViewContentModeScaleAspectFill:
+            self.scrollView.minimumZoomScale = MAX(self.scrollView.bounds.size.width / fullImageSize.width, self.scrollView.bounds.size.height / fullImageSize.height);
+            break;
+        default:
+            self.scrollView.minimumZoomScale = MIN(1, MIN(self.scrollView.bounds.size.width / fullImageSize.width, self.scrollView.bounds.size.height / fullImageSize.height));
+            break;
+    }
+    
+    self.initialZoomScale = self.scrollView.minimumZoomScale;
+    
+    if (initial) {
+        self.scrollView.zoomScale = self.scrollView.minimumZoomScale;
         
-        CGFloat previousMinimumZoomScale = self.scrollView.minimumZoomScale;
-        self.scrollView.minimumZoomScale = MIN(1, MIN(self.scrollView.bounds.size.width / fullImageSize.width, self.scrollView.bounds.size.height / fullImageSize.height));
+        self.otherZoomScale = 1;
+    } else {
         if (self.scrollView.zoomScale == previousMinimumZoomScale) {
             self.scrollView.zoomScale = self.scrollView.minimumZoomScale;
         }
         self.scrollView.zoomScale = MAX(self.scrollView.minimumZoomScale, self.scrollView.zoomScale);
-        
-        self.initialZoomScale = self.scrollView.minimumZoomScale;
-        
-        [self updateImage];
-        [self centerImage];
     }
+}
+
+- (void)setContentMode:(UIViewContentMode)contentMode {
+    [super setContentMode:contentMode];
+    
+    [self updateZoomInitial:NO];
 }
 
 - (void)centerImage {
