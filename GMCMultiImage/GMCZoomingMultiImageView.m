@@ -29,9 +29,9 @@ const CGSize GMCZoomingMultiImageViewPlaceholderSizeDefault = { 55, 55 };
 
 @interface GMCZoomingMultiImageView () <UIScrollViewDelegate>
 
-@property (nonatomic, strong) UITapGestureRecognizer *doubleTapGestureRecognizer;
+@property (nonatomic, strong, readwrite) UIScrollView *scrollView;
+@property (nonatomic, strong, readwrite) UITapGestureRecognizer *doubleTapGestureRecognizer;
 
-@property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIImageView *imageView;
 @property (nonatomic, strong) UIActivityIndicatorView *loadingIndicatorView;
 

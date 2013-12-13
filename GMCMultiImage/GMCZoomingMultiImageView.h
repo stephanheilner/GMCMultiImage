@@ -27,6 +27,7 @@ extern const CGSize GMCZoomingMultiImageViewPlaceholderSizeDefault;
 @interface GMCZoomingMultiImageView : UIView
 
 @property (nonatomic, strong) GMCMultiImage *multiImage;
+@property (nonatomic, strong, readonly) UIScrollView *scrollView;
 @property (nonatomic, strong, readonly) UITapGestureRecognizer *doubleTapGestureRecognizer;
 
 /**
