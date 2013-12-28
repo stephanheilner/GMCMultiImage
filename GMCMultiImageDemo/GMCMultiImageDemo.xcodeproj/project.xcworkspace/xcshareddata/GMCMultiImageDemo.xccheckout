@@ -5,34 +5,34 @@
 	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
 	<false/>
 	<key>IDESourceControlProjectIdentifier</key>
-	<string>EA54E3B3-3D96-4650-9B60-47CFE5F96B44</string>
+	<string>7EB21C33-F705-4328-A749-F27C6AB32739</string>
 	<key>IDESourceControlProjectName</key>
 	<string>GMCMultiImageDemo</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>FAB36208-1E38-42A9-A088-8BA64BCFD99F</key>
-		<string>https://github.com/GalacticMegacorp/GMCMultiImage.git</string>
+		<key>7ADB6FF1-CBF3-4204-B2CC-FF18D7A04873</key>
+		<string>https://github.com/GalacticMegacorp/GMCMultiImage.git/</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>GMCMultiImageDemo/GMCMultiImageDemo.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>FAB36208-1E38-42A9-A088-8BA64BCFD99F</key>
+		<key>7ADB6FF1-CBF3-4204-B2CC-FF18D7A04873</key>
 		<string>../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
-	<string>https://github.com/GalacticMegacorp/GMCMultiImage.git</string>
+	<string>https://github.com/GalacticMegacorp/GMCMultiImage.git/</string>
 	<key>IDESourceControlProjectVersion</key>
 	<integer>110</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>FAB36208-1E38-42A9-A088-8BA64BCFD99F</string>
+	<string>7ADB6FF1-CBF3-4204-B2CC-FF18D7A04873</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>FAB36208-1E38-42A9-A088-8BA64BCFD99F</string>
+			<string>7ADB6FF1-CBF3-4204-B2CC-FF18D7A04873</string>
 			<key>IDESourceControlWCCName</key>
 			<string>GMCMultiImage</string>
 		</dict>

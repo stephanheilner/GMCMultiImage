@@ -29,6 +29,7 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
 
 @property (nonatomic, strong) UIActivityIndicatorView *loadingIndicatorView;
 
+@property (nonatomic, strong) dispatch_queue_t synchronizationQueue;
 @property (nonatomic, strong) GMCMultiImageRendition *currentRendition;
 @property (nonatomic, strong) NSMutableArray *multiImageRenditionFetches;
 @property (nonatomic, strong) NSMutableArray *decompressImageOperations;
@@ -44,6 +45,8 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
         self.loadingIndicatorView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         [self addSubview:self.loadingIndicatorView];
         
+        self.synchronizationQueue = dispatch_queue_create("com.galacticmegacorp.GMCMultiImageView.synchronizationQueue", DISPATCH_QUEUE_SERIAL);
+        
         self.multiImageRenditionFetches = [NSMutableArray array];
         self.decompressImageOperations = [NSMutableArray array];
         
@@ -57,14 +60,17 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
     _multiImage = multiImage;
     
     self.currentRendition = nil;
-    for (GMCDecompressImageOperation *decompressImageOperation in self.decompressImageOperations) {
-        [decompressImageOperation cancel];
-    }
-    for (GMCMultiImageRenditionFetch *multiImageRenditionFetch in self.multiImageRenditionFetches) {
-        [multiImageRenditionFetch cancel];
-    }
-    [self.decompressImageOperations removeAllObjects];
-    [self.multiImageRenditionFetches removeAllObjects];
+    
+    dispatch_sync(self.synchronizationQueue, ^{
+        for (GMCDecompressImageOperation *decompressImageOperation in self.decompressImageOperations) {
+            [decompressImageOperation cancel];
+        }
+        for (GMCMultiImageRenditionFetch *multiImageRenditionFetch in self.multiImageRenditionFetches) {
+            [multiImageRenditionFetch cancel];
+        }
+        [self.decompressImageOperations removeAllObjects];
+        [self.multiImageRenditionFetches removeAllObjects];
+    });
     
     [self.loadingIndicatorView stopAnimating];
     self.image = nil;
@@ -110,8 +116,10 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                 
                 // If the smallest representation is not available, go ahead and fetch it, then show it
                 __block GMCMultiImageRenditionFetch *fetch = [smallestRendition fetchImageWithCompletionBlock:^(NSError *error) {
-                    if ([self.currentRendition isEqual:rendition] && [self.multiImageRenditionFetches containsObject:fetch]) {
-                        [self.multiImageRenditionFetches removeObject:fetch];
+                    if ([self.currentRendition isEqual:rendition]) {
+                        dispatch_sync(self.synchronizationQueue, ^{
+                            [self.multiImageRenditionFetches removeObject:fetch];
+                        });
                     }
                     
                     if (!error) {
@@ -123,8 +131,10 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                                 __weak GMCDecompressImageOperation *weakOperation = operation;
                                 operation.completionBlock = ^{
                                     UIImage *image = weakOperation.image;
-                                    if ([self.currentRendition isEqual:rendition] && [self.decompressImageOperations containsObject:weakOperation]) {
-                                        [self.decompressImageOperations removeObject:weakOperation];
+                                    if ([self.currentRendition isEqual:rendition]) {
+                                        dispatch_sync(self.synchronizationQueue, ^{
+                                            [self.decompressImageOperations removeObject:weakOperation];
+                                        });
                                     }
                                     
                                     dispatch_async(dispatch_get_main_queue(), ^{
@@ -136,14 +146,18 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                                     });
                                 };
                                 
-                                [self.decompressImageOperations addObject:operation];
+                                dispatch_sync(self.synchronizationQueue, ^{
+                                    [self.decompressImageOperations addObject:operation];
+                                });
                                 [[NSOperationQueue decompressImageQueue] addOperation:operation];
                             }
                         });
                     }
                 }];
                 if (fetch) {
-                    [self.multiImageRenditionFetches addObject:fetch];
+                    dispatch_sync(self.synchronizationQueue, ^{
+                        [self.multiImageRenditionFetches addObject:fetch];
+                    });
                 }
             }
         }
@@ -154,8 +168,10 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                 // Fetch and set the best available representation, as long as the desired one hasn't been set yet.
                 // Don't directly set the image, as that would cause the image to be loaded on the main thread.
                 __block GMCMultiImageRenditionFetch *fetch = [bestAvailableRendition fetchImageWithCompletionBlock:^(NSError *error) {
-                    if ([self.currentRendition isEqual:rendition] && [self.multiImageRenditionFetches containsObject:fetch]) {
-                        [self.multiImageRenditionFetches removeObject:fetch];
+                    if ([self.currentRendition isEqual:rendition]) {
+                        dispatch_sync(self.synchronizationQueue, ^{
+                            [self.multiImageRenditionFetches removeObject:fetch];
+                        });
                     }
                     
                     if (!error) {
@@ -167,8 +183,10 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                                 __weak GMCDecompressImageOperation *weakOperation = operation;
                                 operation.completionBlock = ^{
                                     UIImage *image = weakOperation.image;
-                                    if ([self.currentRendition isEqual:rendition] && [self.decompressImageOperations containsObject:weakOperation]) {
-                                        [self.decompressImageOperations removeObject:weakOperation];
+                                    if ([self.currentRendition isEqual:rendition]) {
+                                        dispatch_sync(self.synchronizationQueue, ^{
+                                            [self.decompressImageOperations removeObject:weakOperation];
+                                        });
                                     }
                                     
                                     dispatch_async(dispatch_get_main_queue(), ^{
@@ -180,14 +198,18 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                                     });
                                 };
                                 
-                                [self.decompressImageOperations addObject:operation];
+                                dispatch_sync(self.synchronizationQueue, ^{
+                                    [self.decompressImageOperations addObject:operation];
+                                });
                                 [[NSOperationQueue decompressImageQueue] addOperation:operation];
                             }
                         });
                     }
                 }];
                 if (fetch) {
-                    [self.multiImageRenditionFetches addObject:fetch];
+                    dispatch_sync(self.synchronizationQueue, ^{
+                        [self.multiImageRenditionFetches addObject:fetch];
+                    });
                 }
             }
         }
@@ -195,8 +217,10 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
         // Fetch and set the desired image representation.
         // Don't directly set the image, as that would cause the image to be loaded on the main thread.
         __block GMCMultiImageRenditionFetch *fetch = [rendition fetchImageWithCompletionBlock:^(NSError *error) {
-            if ([self.currentRendition isEqual:rendition] && [self.multiImageRenditionFetches containsObject:fetch]) {
-                [self.multiImageRenditionFetches removeObject:fetch];
+            if ([self.currentRendition isEqual:rendition]) {
+                dispatch_sync(self.synchronizationQueue, ^{
+                    [self.multiImageRenditionFetches removeObject:fetch];
+                });
             }
             
             if (error) {
@@ -212,8 +236,10 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                         __weak GMCDecompressImageOperation *weakOperation = operation;
                         operation.completionBlock = ^{
                             UIImage *image = weakOperation.image;
-                            if ([self.currentRendition isEqual:rendition] && [self.decompressImageOperations containsObject:weakOperation]) {
-                                [self.decompressImageOperations removeObject:weakOperation];
+                            if ([self.currentRendition isEqual:rendition]) {
+                                dispatch_sync(self.synchronizationQueue, ^{
+                                    [self.decompressImageOperations removeObject:weakOperation];
+                                });
                             }
                             
                             dispatch_async(dispatch_get_main_queue(), ^{
@@ -225,14 +251,18 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                             });
                         };
                         
-                        [self.decompressImageOperations addObject:operation];
+                        dispatch_sync(self.synchronizationQueue, ^{
+                            [self.decompressImageOperations addObject:operation];
+                        });
                         [[NSOperationQueue decompressImageQueue] addOperation:operation];
                     }
                 });
             }
         }];
         if (fetch) {
-            [self.multiImageRenditionFetches addObject:fetch];
+            dispatch_sync(self.synchronizationQueue, ^{
+                [self.multiImageRenditionFetches addObject:fetch];
+            });
         }
     }
 }
