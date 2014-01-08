@@ -27,8 +27,21 @@ extern const CGSize GMCZoomingMultiImageViewPlaceholderSizeDefault;
 @interface GMCZoomingMultiImageView : UIView
 
 @property (nonatomic, strong) GMCMultiImage *multiImage;
+
+/**
+ * The underlying scroll view, for zooming and panning.
+ */
 @property (nonatomic, strong, readonly) UIScrollView *scrollView;
+
+/**
+ * The gesture recognizer used for zooming in/out on double tap.
+ */
 @property (nonatomic, strong, readonly) UITapGestureRecognizer *doubleTapGestureRecognizer;
+
+/**
+ * The underlying image view, for displaying the current image rendition.
+ */
+@property (nonatomic, strong, readonly) UIImageView *imageView;
 
 /**
  * Size used to select a rendition to show immediately (if available) while waiting for the best rendition to load and decompress in the background.
