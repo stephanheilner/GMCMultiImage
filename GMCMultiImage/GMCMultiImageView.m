@@ -40,11 +40,6 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
 
 - (id)initWithFrame:(CGRect)frame {
     if ((self = [super initWithFrame:frame])) {
-        self.loadingIndicatorView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-        self.loadingIndicatorView.frame = self.bounds;
-        self.loadingIndicatorView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        [self addSubview:self.loadingIndicatorView];
-        
         self.synchronizationQueue = dispatch_queue_create("com.galacticmegacorp.GMCMultiImageView.synchronizationQueue", DISPATCH_QUEUE_SERIAL);
         
         self.multiImageRenditionFetches = [NSMutableArray array];
@@ -72,7 +67,7 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
         [self.multiImageRenditionFetches removeAllObjects];
     });
     
-    [self.loadingIndicatorView stopAnimating];
+    [self stopAnimatingLoadingIndicator];
     self.image = nil;
     
     if (self.multiImage) {
@@ -83,6 +78,23 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
 - (void)setLoadingIndicatorViewHidden:(BOOL)loadingIndicatorViewHidden {
     _loadingIndicatorViewHidden = loadingIndicatorViewHidden;
     
+    [self stopAnimatingLoadingIndicator];
+}
+
+- (void)startAnimatingLoadingIndicator {
+    if (!self.loadingIndicatorViewHidden) {
+        if (!self.loadingIndicatorView) {
+            self.loadingIndicatorView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+            self.loadingIndicatorView.frame = self.bounds;
+            self.loadingIndicatorView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+            [self addSubview:self.loadingIndicatorView];
+        }
+        
+        [self.loadingIndicatorView startAnimating];
+    }
+}
+
+- (void)stopAnimatingLoadingIndicator {
     [self.loadingIndicatorView stopAnimating];
 }
 
@@ -104,15 +116,13 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
         if (self.image == nil) {
             GMCMultiImageRendition *smallestRendition = [self.multiImage bestRenditionThatFits:self.placeholderSize scale:self.scale contentMode:[self multiImageContentMode]];
             if (smallestRendition.isImageAvailable) {
-                [self.loadingIndicatorView stopAnimating];
+                [self stopAnimatingLoadingIndicator];
                 
                 // Show the smallest representation first, if available.
                 // It's OK to do this on the main thread because the image is very small.
                 self.image = smallestRendition.image;
             } else {
-                if (!self.loadingIndicatorViewHidden) {
-                    [self.loadingIndicatorView startAnimating];
-                }
+                [self startAnimatingLoadingIndicator];
                 
                 // If the smallest representation is not available, go ahead and fetch it, then show it
                 __block GMCMultiImageRenditionFetch *fetch = [smallestRendition fetchImageWithCompletionBlock:^(NSError *error) {
@@ -139,7 +149,7 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                                     
                                     dispatch_async(dispatch_get_main_queue(), ^{
                                         if ([self.currentRendition isEqual:rendition] && self.image == nil) {
-                                            [self.loadingIndicatorView stopAnimating];
+                                            [self stopAnimatingLoadingIndicator];
                                             
                                             self.image = image;
                                         }
@@ -191,7 +201,7 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                                     
                                     dispatch_async(dispatch_get_main_queue(), ^{
                                         if ([self.currentRendition isEqual:rendition]) {
-                                            [self.loadingIndicatorView stopAnimating];
+                                            [self stopAnimatingLoadingIndicator];
                                             
                                             self.image = image;
                                         }
@@ -225,7 +235,7 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
             
             if (error) {
                 if ([self.currentRendition isEqual:rendition]) {
-                    [self.loadingIndicatorView stopAnimating];
+                    [self stopAnimatingLoadingIndicator];
                 }
             } else {
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
@@ -244,7 +254,7 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                             
                             dispatch_async(dispatch_get_main_queue(), ^{
                                 if ([self.currentRendition isEqual:rendition]) {
-                                    [self.loadingIndicatorView stopAnimating];
+                                    [self stopAnimatingLoadingIndicator];
                                     
                                     self.image = image;
                                 }
