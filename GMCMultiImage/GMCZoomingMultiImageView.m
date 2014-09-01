@@ -126,13 +126,15 @@ const CGSize GMCZoomingMultiImageViewPlaceholderSizeDefault = { 55, 55 };
     
     self.scrollView.contentSize = fullImageSize;
     
+    CGRect contentFrame = UIEdgeInsetsInsetRect(self.scrollView.bounds, self.scrollView.contentInset);
+    
     CGFloat previousMinimumZoomScale = self.scrollView.minimumZoomScale;
     switch (self.contentMode) {
         case UIViewContentModeScaleAspectFill:
-            self.scrollView.minimumZoomScale = MAX(self.scrollView.bounds.size.width / fullImageSize.width, self.scrollView.bounds.size.height / fullImageSize.height);
+            self.scrollView.minimumZoomScale = MAX(contentFrame.size.width / fullImageSize.width, contentFrame.size.height / fullImageSize.height);
             break;
         default:
-            self.scrollView.minimumZoomScale = MIN(1, MIN(self.scrollView.bounds.size.width / fullImageSize.width, self.scrollView.bounds.size.height / fullImageSize.height));
+            self.scrollView.minimumZoomScale = MIN(1, MIN(contentFrame.size.width / fullImageSize.width, contentFrame.size.height / fullImageSize.height));
             break;
     }
     
@@ -157,9 +159,11 @@ const CGSize GMCZoomingMultiImageViewPlaceholderSizeDefault = { 55, 55 };
 }
 
 - (void)centerImage {
+    CGRect contentFrame = UIEdgeInsetsInsetRect(self.scrollView.bounds, self.scrollView.contentInset);
+    
     CGPoint center;
-	center.x = roundf(self.scrollView.contentSize.width / 2 + MAX(0, (self.scrollView.bounds.size.width - self.scrollView.contentSize.width) / 2));
-	center.y = roundf(self.scrollView.contentSize.height / 2 + MAX(0, (self.scrollView.bounds.size.height - self.scrollView.contentSize.height) / 2));
+	center.x = roundf(self.scrollView.contentSize.width / 2 + MAX(0, (contentFrame.size.width - self.scrollView.contentSize.width) / 2));
+	center.y = roundf(self.scrollView.contentSize.height / 2 + MAX(0, (contentFrame.size.height - self.scrollView.contentSize.height) / 2));
     self.imageView.center = center;
 }
 

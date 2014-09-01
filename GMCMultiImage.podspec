@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "GMCMultiImage"
-  s.version      = "1.0.0"
+  s.version      = "1.0.1"
   s.summary      = "GMCMultiImage is a set of classes you can use to show pictures for which you have multiple images in a range of sizes."
   s.author       = 'Hilton Campbell'
   s.homepage     = "https://github.com/GalacticMegacorp/GMCMultiImage"
