@@ -48,7 +48,7 @@
     }
     
     // Draw the image decompressed
-    UIGraphicsBeginImageContextWithOptions(self.image.size, YES, 1);
+    UIGraphicsBeginImageContextWithOptions(self.image.size, YES, 0);
     [self.image drawAtPoint:CGPointZero];
     
     // Exit early if possible
