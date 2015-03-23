@@ -83,6 +83,10 @@ const CGSize GMCZoomingMultiImageViewPlaceholderSizeDefault = { 55, 55 };
 }
 
 - (void)setMultiImage:(GMCMultiImage *)multiImage {
+    if ([multiImage isEqual:_multiImage]) {
+        return;
+    }
+    
     _multiImage = multiImage;
     
     // Reset state

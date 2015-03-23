@@ -53,7 +53,7 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
 }
 
 - (void)setMultiImage:(GMCMultiImage *)multiImage {
-    if (multiImage == _multiImage) {
+    if ([multiImage isEqual:_multiImage]) {
         return;
     }
 
