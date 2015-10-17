@@ -53,7 +53,9 @@ const CGSize GMCZoomingMultiImageViewPlaceholderSizeDefault = { 55, 55 };
         [super setContentMode:UIViewContentModeScaleAspectFit];
         
         self.scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
+#if !defined(TARGET_OS_TV)
         self.scrollView.scrollsToTop = NO;
+#endif
         self.scrollView.showsVerticalScrollIndicator = NO;
         self.scrollView.showsHorizontalScrollIndicator = NO;
         self.scrollView.delegate = self;
