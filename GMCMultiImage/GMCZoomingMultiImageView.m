@@ -212,29 +212,31 @@ const CGSize GMCZoomingMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                     }
                     
                     if (!error) {
-                        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+                        dispatch_async(dispatch_get_main_queue(), ^{
                             if ([self.currentRendition isEqual:rendition] && self.imageView.image == nil) {
-                                GMCDecompressImageOperation *operation = [[GMCDecompressImageOperation alloc] init];
-                                operation.image = smallestRendition.image;
-                                
-                                __weak GMCDecompressImageOperation *weakOperation = operation;
-                                operation.completionBlock = ^{
-                                    UIImage *image = weakOperation.image;
-                                    if ([self.decompressImageOperations containsObject:weakOperation]) {
-                                        [self.decompressImageOperations removeObject:weakOperation];
-                                    }
+                                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+                                    GMCDecompressImageOperation *operation = [[GMCDecompressImageOperation alloc] init];
+                                    operation.image = smallestRendition.image;
                                     
-                                    dispatch_async(dispatch_get_main_queue(), ^{
-                                        if ([self.currentRendition isEqual:rendition] && self.imageView.image == nil) {
-                                            [self.loadingIndicatorView stopAnimating];
-                                            
-                                            self.imageView.image = image;
+                                    __weak GMCDecompressImageOperation *weakOperation = operation;
+                                    operation.completionBlock = ^{
+                                        UIImage *image = weakOperation.image;
+                                        if ([self.decompressImageOperations containsObject:weakOperation]) {
+                                            [self.decompressImageOperations removeObject:weakOperation];
                                         }
-                                    });
-                                };
-                                
-                                [self.decompressImageOperations addObject:operation];
-                                [[NSOperationQueue decompressImageQueue] addOperation:operation];
+                                        
+                                        dispatch_async(dispatch_get_main_queue(), ^{
+                                            if ([self.currentRendition isEqual:rendition] && self.imageView.image == nil) {
+                                                [self.loadingIndicatorView stopAnimating];
+                                                
+                                                self.imageView.image = image;
+                                            }
+                                        });
+                                    };
+                                    
+                                    [self.decompressImageOperations addObject:operation];
+                                    [[NSOperationQueue decompressImageQueue] addOperation:operation];
+                                });
                             }
                         });
                     }
@@ -297,9 +299,11 @@ const CGSize GMCZoomingMultiImageViewPlaceholderSizeDefault = { 55, 55 };
             }
             
             if (error) {
-                if ([self.currentRendition isEqual:rendition]) {
-                    [self.loadingIndicatorView stopAnimating];
-                }
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if ([self.currentRendition isEqual:rendition]) {
+                        [self.loadingIndicatorView stopAnimating];
+                    }
+                });
             } else {
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
                     if ([self.currentRendition isEqual:rendition]) {
