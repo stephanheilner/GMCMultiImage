@@ -138,41 +138,43 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
                     }
                     
                     if (!error) {
-                        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+                        dispatch_async(dispatch_get_main_queue(), ^{
                             if ([self.currentRendition isEqual:rendition] && self.image == nil) {
-                                void (^setImageBlock)(UIImage *image) = ^(UIImage *image) {
-                                    dispatch_async(dispatch_get_main_queue(), ^{
-                                        if ([self.currentRendition isEqual:rendition] && self.image == nil) {
-                                            [self stopAnimatingLoadingIndicator];
-                                            
-                                            self.image = image;
-                                        }
-                                    });
-                                };
-                                
-                                if (self.shouldDecompressImages) {
-                                    GMCDecompressImageOperation *operation = [[GMCDecompressImageOperation alloc] init];
-                                    operation.image = smallestRendition.image;
-                                    
-                                    __weak GMCDecompressImageOperation *weakOperation = operation;
-                                    operation.completionBlock = ^{
-                                        UIImage *image = weakOperation.image;
-                                        if ([self.currentRendition isEqual:rendition]) {
-                                            dispatch_sync(self.synchronizationQueue, ^{
-                                                [self.decompressImageOperations removeObject:weakOperation];
-                                            });
-                                        }
-                                        
-                                        setImageBlock(image);
+                                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+                                    void (^setImageBlock)(UIImage *image) = ^(UIImage *image) {
+                                        dispatch_async(dispatch_get_main_queue(), ^{
+                                            if ([self.currentRendition isEqual:rendition] && self.image == nil) {
+                                                [self stopAnimatingLoadingIndicator];
+                                                
+                                                self.image = image;
+                                            }
+                                        });
                                     };
                                     
-                                    dispatch_sync(self.synchronizationQueue, ^{
-                                        [self.decompressImageOperations addObject:operation];
-                                    });
-                                    [[NSOperationQueue decompressImageQueue] addOperation:operation];
-                                } else {
-                                    setImageBlock(smallestRendition.image);
-                                }
+                                    if (self.shouldDecompressImages) {
+                                        GMCDecompressImageOperation *operation = [[GMCDecompressImageOperation alloc] init];
+                                        operation.image = smallestRendition.image;
+                                        
+                                        __weak GMCDecompressImageOperation *weakOperation = operation;
+                                        operation.completionBlock = ^{
+                                            UIImage *image = weakOperation.image;
+                                            if ([self.currentRendition isEqual:rendition]) {
+                                                dispatch_sync(self.synchronizationQueue, ^{
+                                                    [self.decompressImageOperations removeObject:weakOperation];
+                                                });
+                                            }
+                                            
+                                            setImageBlock(image);
+                                        };
+                                        
+                                        dispatch_sync(self.synchronizationQueue, ^{
+                                            [self.decompressImageOperations addObject:operation];
+                                        });
+                                        [[NSOperationQueue decompressImageQueue] addOperation:operation];
+                                    } else {
+                                        setImageBlock(smallestRendition.image);
+                                    }
+                                });
                             }
                         });
                     }
@@ -255,9 +257,11 @@ const CGSize GMCMultiImageViewPlaceholderSizeDefault = { 55, 55 };
             }
             
             if (error) {
-                if ([self.currentRendition isEqual:rendition]) {
-                    [self stopAnimatingLoadingIndicator];
-                }
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if ([self.currentRendition isEqual:rendition]) {
+                        [self stopAnimatingLoadingIndicator];
+                    }
+                });
             } else {
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
                     if ([self.currentRendition isEqual:rendition]) {
