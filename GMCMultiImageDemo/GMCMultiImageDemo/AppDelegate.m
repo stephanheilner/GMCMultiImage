@@ -21,7 +21,7 @@
 // THE SOFTWARE.
 
 #import "AppDelegate.h"
-#import "DemoViewController.h"
+#import "GMCMultiImageDemo-Swift.h"
 
 @implementation AppDelegate
 

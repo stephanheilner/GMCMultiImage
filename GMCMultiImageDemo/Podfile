@@ -1,0 +1,11 @@
+# Uncomment the next line to define a global platform for your project
+platform :ios, '10.0'
+
+project 'GMCMultiImageDemo.xcodeproj'
+
+target 'GMCMultiImageDemo' do
+    use_frameworks!
+    
+    pod 'GMCMultiImage', :path => '../'
+    
+end
